@@ -20,6 +20,11 @@ from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
+# Constants for validation
+MIN_VALID_YEAR = 1900
+MAX_VALID_YEAR = 2100
+MIN_ISA_LENGTH = 106
+
 
 class ValidationLevel(Enum):
     """Severity levels for validation issues"""
@@ -146,13 +151,13 @@ class X12Validator:
     def _parse_delimiters(self, content: str) -> bool:
         """
         Parse delimiters from ISA segment
-        
+
         The ISA segment has fixed positions:
         - Position 3: Element separator
-        - Position 105: Sub-element separator  
+        - Position 105: Sub-element separator
         - Last character: Segment terminator
         """
-        if len(content) < 106:
+        if len(content) < MIN_ISA_LENGTH:
             self.result.add_issue(
                 ValidationLevel.ERROR, 'ISA', 0, None,
                 "File too short to contain valid ISA segment"
@@ -183,19 +188,23 @@ class X12Validator:
         return True
     
     def _split_segments(self, content: str) -> List[List[str]]:
-        """Split content into segments and elements"""
+        """Split content into segments and elements
+
+        Returns:
+            List of segments, where each segment is a list of elements
+        """
         segments = []
         raw_segments = content.split(self.segment_terminator)
-        
+
         for raw_seg in raw_segments:
             raw_seg = raw_seg.strip()
             if raw_seg:
                 elements = raw_seg.split(self.element_separator)
                 segments.append(elements)
-        
+
         return segments
     
-    def _validate_structure(self, segments: List[List[str]]):
+    def _validate_structure(self, segments: List[List[str]]) -> None:
         """Validate basic structural requirements"""
         for idx, segment in enumerate(segments, 1):
             segment_id = segment[0] if segment else ""
@@ -222,9 +231,9 @@ class X12Validator:
                     f"Segment has insufficient elements (found {len(segment)})"
                 )
     
-    def _validate_envelopes(self, segments: List[List[str]]):
+    def _validate_envelopes(self, segments: List[List[str]]) -> None:
         """Validate ISA/IEA, GS/GE, ST/SE envelope structure"""
-        
+
         # Track envelope state
         isa_count = 0
         gs_count = 0
@@ -342,7 +351,7 @@ class X12Validator:
                 "Missing ST segment (required)"
             )
     
-    def _validate_segments(self, segments: List[List[str]]):
+    def _validate_segments(self, segments: List[List[str]]) -> None:
         """Validate individual segment content"""
         for idx, segment in enumerate(segments, 1):
             segment_id = segment[0] if segment else ""
@@ -358,7 +367,7 @@ class X12Validator:
             elif segment_id == 'SV1':
                 self._validate_sv1(segment, idx)
     
-    def _validate_nm1(self, segment: List[str], idx: int):
+    def _validate_nm1(self, segment: List[str], idx: int) -> None:
         """Validate NM1 (Entity Name) segment"""
         if len(segment) < 4:
             self.result.add_issue(
@@ -392,7 +401,7 @@ class X12Validator:
                 "Entity name is required but empty"
             )
     
-    def _validate_clm(self, segment: List[str], idx: int):
+    def _validate_clm(self, segment: List[str], idx: int) -> None:
         """Validate CLM (Claim Information) segment"""
         if len(segment) < 6:
             self.result.add_issue(
@@ -432,7 +441,7 @@ class X12Validator:
                         f"Facility code '{facility_code}' should be 2 digits"
                     )
     
-    def _validate_dtp(self, segment: List[str], idx: int):
+    def _validate_dtp(self, segment: List[str], idx: int) -> None:
         """Validate DTP (Date or Time Period) segment"""
         if len(segment) < 4:
             self.result.add_issue(
@@ -463,8 +472,8 @@ class X12Validator:
                 year = int(date_value[0:4])
                 month = int(date_value[4:6])
                 day = int(date_value[6:8])
-                
-                if year < 1900 or year > 2100:
+
+                if year < MIN_VALID_YEAR or year > MAX_VALID_YEAR:
                     self.result.add_issue(
                         ValidationLevel.WARNING, 'DTP', idx, 3,
                         f"Date year {year} seems unusual"
@@ -480,7 +489,7 @@ class X12Validator:
                         f"Date day {day} is invalid"
                     )
     
-    def _validate_hi(self, segment: List[str], idx: int):
+    def _validate_hi(self, segment: List[str], idx: int) -> None:
         """Validate HI (Health Care Diagnosis Code) segment"""
         if len(segment) < 2:
             self.result.add_issue(
@@ -512,7 +521,7 @@ class X12Validator:
                             "Diagnosis code is empty"
                         )
     
-    def _validate_sv1(self, segment: List[str], idx: int):
+    def _validate_sv1(self, segment: List[str], idx: int) -> None:
         """Validate SV1 (Professional Service) segment"""
         if len(segment) < 3:
             self.result.add_issue(
@@ -552,9 +561,44 @@ class X12Validator:
                     f"Service units '{units}' is not a valid number"
                 )
     
-    def _validate_business_rules(self, segments: List[List[str]]):
+    def _check_required_entities(
+        self,
+        has_billing_provider: bool,
+        has_subscriber: bool,
+        has_claim: bool
+    ) -> None:
+        """Check that all required entities are present"""
+        if not has_billing_provider:
+            self.result.add_issue(
+                ValidationLevel.ERROR, 'NM1', 0, None,
+                "Missing required Billing Provider (NM1*85)"
+            )
+
+        if not has_subscriber:
+            self.result.add_issue(
+                ValidationLevel.ERROR, 'NM1', 0, None,
+                "Missing required Subscriber/Insured (NM1*IL)"
+            )
+
+        if not has_claim:
+            self.result.add_issue(
+                ValidationLevel.ERROR, 'CLM', 0, None,
+                "Missing required CLM (Claim Information) segment"
+            )
+
+    def _check_claim_totals(self, claim_amount: float, service_line_total: float) -> None:
+        """Validate claim amount matches service line total"""
+        if claim_amount > 0 and service_line_total > 0:
+            difference = abs(claim_amount - service_line_total)
+            if difference > 0.01:  # Allow for small rounding differences
+                self.result.add_issue(
+                    ValidationLevel.WARNING, 'CLM', 0, 2,
+                    f"Claim amount (${claim_amount:.2f}) does not match service line total (${service_line_total:.2f})"
+                )
+
+    def _validate_business_rules(self, segments: List[List[str]]) -> None:
         """Validate business logic and relationships"""
-        
+
         # Extract key segments for validation
         has_billing_provider = False
         has_subscriber = False
@@ -562,10 +606,10 @@ class X12Validator:
         has_claim = False
         claim_amount = 0.0
         service_line_total = 0.0
-        
+
         for idx, segment in enumerate(segments, 1):
             segment_id = segment[0] if segment else ""
-            
+
             # Check for required entities
             if segment_id == 'NM1' and len(segment) > 1:
                 entity_code = segment[1]
@@ -575,7 +619,7 @@ class X12Validator:
                     has_subscriber = True
                 elif entity_code == 'QC':  # Patient
                     has_patient = True
-            
+
             # Track claim amount
             elif segment_id == 'CLM':
                 has_claim = True
@@ -584,7 +628,7 @@ class X12Validator:
                         claim_amount = float(segment[2])
                     except ValueError:
                         pass
-            
+
             # Track service line amounts
             elif segment_id == 'SV1':
                 if len(segment) > 2:
@@ -592,34 +636,10 @@ class X12Validator:
                         service_line_total += float(segment[2])
                     except ValueError:
                         pass
-        
+
         # Business rule validations
-        if not has_billing_provider:
-            self.result.add_issue(
-                ValidationLevel.ERROR, 'NM1', 0, None,
-                "Missing required Billing Provider (NM1*85)"
-            )
-        
-        if not has_subscriber:
-            self.result.add_issue(
-                ValidationLevel.ERROR, 'NM1', 0, None,
-                "Missing required Subscriber/Insured (NM1*IL)"
-            )
-        
-        if not has_claim:
-            self.result.add_issue(
-                ValidationLevel.ERROR, 'CLM', 0, None,
-                "Missing required CLM (Claim Information) segment"
-            )
-        
-        # Validate claim amount matches service line total
-        if claim_amount > 0 and service_line_total > 0:
-            difference = abs(claim_amount - service_line_total)
-            if difference > 0.01:  # Allow for small rounding differences
-                self.result.add_issue(
-                    ValidationLevel.WARNING, 'CLM', 0, 2,
-                    f"Claim amount (${claim_amount:.2f}) does not match service line total (${service_line_total:.2f})"
-                )
+        self._check_required_entities(has_billing_provider, has_subscriber, has_claim)
+        self._check_claim_totals(claim_amount, service_line_total)
 
 
 def print_validation_report(result: ValidationResult):

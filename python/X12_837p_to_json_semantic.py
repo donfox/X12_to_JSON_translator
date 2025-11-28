@@ -9,6 +9,12 @@ import sys
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
+# Constants for segment parsing
+MAX_RELATED_SEGMENTS = 5  # Maximum segments to search after a primary segment
+MAX_PROVIDER_SEGMENTS = 20  # Maximum segments in provider loop
+MAX_SUBSCRIBER_SEGMENTS = 30  # Maximum segments in subscriber loop
+MAX_CLAIM_SEGMENTS = 50  # Maximum segments in claim loop
+
 
 class X12Parser:
     """Parser for X12 EDI format files"""
@@ -47,7 +53,7 @@ class X12Parser:
         return [seg for seg in self.segments if seg[0] == segment_id]
     
     def find_segment_index(self, segment_id: str, start_index: int = 0) -> int:
-        """Find index of first segment with given ID"""
+        """Find index of first segment with given ID starting from start_index"""
         for i in range(start_index, len(self.segments)):
             if self.segments[i][0] == segment_id:
                 return i
@@ -165,7 +171,7 @@ class X12_837P_Converter:
                 # Look for PER segment (contact info) after NM1*41
                 nm1_index = self.parser.segments.index(nm1)
                 per_index = self.parser.find_segment_index('PER', nm1_index)
-                if per_index > nm1_index and per_index < nm1_index + 5:
+                if per_index > nm1_index and per_index < nm1_index + MAX_RELATED_SEGMENTS:
                     per = self.parser.segments[per_index]
                     submitter["contact"] = {
                         "name": per[2] if len(per) > 2 else None,
@@ -205,7 +211,7 @@ class X12_837P_Converter:
                 }
                 
                 # Find NM1*85 (Billing Provider) after this HL
-                for j in range(i + 1, min(i + 20, len(self.parser.segments))):
+                for j in range(i + 1, min(i + MAX_PROVIDER_SEGMENTS, len(self.parser.segments))):
                     seg = self.parser.segments[j]
                     
                     if seg[0] == 'HL':  # Stop at next HL
@@ -253,7 +259,7 @@ class X12_837P_Converter:
                 }
                 
                 # Parse segments in this loop
-                for j in range(i + 1, min(i + 30, len(self.parser.segments))):
+                for j in range(i + 1, min(i + MAX_SUBSCRIBER_SEGMENTS, len(self.parser.segments))):
                     seg = self.parser.segments[j]
                     
                     if seg[0] == 'HL' or seg[0] == 'CLM':  # Stop at next HL or CLM
@@ -312,13 +318,13 @@ class X12_837P_Converter:
     def _parse_claims(self) -> List[Dict[str, Any]]:
         """Parse claim information (CLM segment and service lines)"""
         claims = []
-        
+
         # Find all CLM segments
         for i, segment in enumerate(self.parser.segments):
             if segment[0] == 'CLM':
                 claim = {
                     "claimId": segment[1] if len(segment) > 1 else None,
-                    "totalChargeAmount": float(segment[2]) if len(segment) > 2 else 0.0
+                    "totalChargeAmount": self._safe_float(segment[2]) if len(segment) > 2 else 0.0
                 }
                 
                 # Parse claim-level information
@@ -337,7 +343,7 @@ class X12_837P_Converter:
                     claim["patientSignature"] = segment[9]
                 
                 # Look for related segments
-                for j in range(i + 1, min(i + 50, len(self.parser.segments))):
+                for j in range(i + 1, min(i + MAX_CLAIM_SEGMENTS, len(self.parser.segments))):
                     seg = self.parser.segments[j]
                     
                     if seg[0] == 'CLM' or seg[0] == 'SE':  # Stop at next claim or transaction end
@@ -415,9 +421,9 @@ class X12_837P_Converter:
                                 "description": self._get_procedure_description(proc_parts[1] if len(proc_parts) > 1 else None)
                             }
                         
-                        service_line["chargeAmount"] = float(sv_seg[2]) if len(sv_seg) > 2 else 0.0
+                        service_line["chargeAmount"] = self._safe_float(sv_seg[2]) if len(sv_seg) > 2 else 0.0
                         service_line["unit"] = sv_seg[3] if len(sv_seg) > 3 else None
-                        service_line["quantity"] = float(sv_seg[4]) if len(sv_seg) > 4 else 0.0
+                        service_line["quantity"] = self._safe_float(sv_seg[4]) if len(sv_seg) > 4 else 0.0
                         service_line["placeOfService"] = sv_seg[6] if len(sv_seg) > 6 else None
                     
                     elif sv_seg[0] == 'DTP' and len(sv_seg) > 1 and sv_seg[1] == '472':
@@ -445,22 +451,29 @@ class X12_837P_Converter:
         """Convert YYYYMMDD to YYYY-MM-DD"""
         if not date_str or len(date_str) < 8:
             return None
-        
+
         try:
             return f"{date_str[0:4]}-{date_str[4:6]}-{date_str[6:8]}"
-        except:
+        except (ValueError, IndexError, TypeError):
             return date_str
     
     def _format_time(self, time_str: str) -> Optional[str]:
         """Convert HHMM to HH:MM"""
         if not time_str or len(time_str) < 4:
             return None
-        
+
         try:
             return f"{time_str[0:2]}:{time_str[2:4]}"
-        except:
+        except (ValueError, IndexError, TypeError):
             return time_str
     
+    def _safe_float(self, value: str) -> float:
+        """Safely convert string to float, returning 0.0 on error"""
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            return 0.0
+
     def _decode_payer_responsibility(self, code: str) -> str:
         """Decode payer responsibility code"""
         codes = {

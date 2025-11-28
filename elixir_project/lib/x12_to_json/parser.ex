@@ -31,17 +31,26 @@ defmodule X12ToJson.Parser do
   end
 
   def get_segment(%__MODULE__{segments: segments}, segment_id) do
-    Enum.find(segments, fn [id | _] -> id == segment_id end)
+    Enum.find(segments, fn
+      [id | _] when id == segment_id -> true
+      _ -> false
+    end)
   end
 
   def get_all_segments(%__MODULE__{segments: segments}, segment_id) do
-    Enum.filter(segments, fn [id | _] -> id == segment_id end)
+    Enum.filter(segments, fn
+      [id | _] when id == segment_id -> true
+      _ -> false
+    end)
   end
 
   def find_segment_index(%__MODULE__{segments: segments}, segment_id, start_index \\ 0) do
     segments
     |> Enum.drop(start_index)
-    |> Enum.find_index(fn [id | _] -> id == segment_id end)
+    |> Enum.find_index(fn
+      [id | _] when id == segment_id -> true
+      _ -> false
+    end)
     |> case do
       nil -> -1
       index -> start_index + index

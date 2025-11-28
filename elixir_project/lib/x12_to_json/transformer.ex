@@ -6,6 +6,12 @@ defmodule X12ToJson.Transformer do
   alias X12ToJson.Parser
   alias X12ToJson.Helpers
 
+  # Constants for segment loop sizes
+  @max_related_segments 5
+  @max_provider_segments 20
+  @max_subscriber_segments 30
+  @max_claim_segments 50
+
   def convert(parser) do
     %{
       metadata: parse_metadata(parser),
@@ -40,17 +46,22 @@ defmodule X12ToJson.Transformer do
     isa = Parser.get_segment(parser, "ISA")
 
     %{
-      senderId: Helpers.get_element(isa, 6) |> String.trim(),
-      senderQualifier: Helpers.get_element(isa, 5) |> String.trim(),
-      receiverId: Helpers.get_element(isa, 8) |> String.trim(),
-      receiverQualifier: Helpers.get_element(isa, 7) |> String.trim(),
+      senderId: safe_trim(Helpers.get_element(isa, 6)),
+      senderQualifier: safe_trim(Helpers.get_element(isa, 5)),
+      receiverId: safe_trim(Helpers.get_element(isa, 8)),
+      receiverQualifier: safe_trim(Helpers.get_element(isa, 7)),
       date: Helpers.format_date(Helpers.get_element(isa, 9)),
       time: Helpers.format_time(Helpers.get_element(isa, 10)),
-      controlNumber: Helpers.get_element(isa, 13) |> String.trim(),
-      versionNumber: Helpers.get_element(isa, 12) |> String.trim(),
-      testIndicator: Helpers.get_element(isa, 15) |> String.trim()
+      controlNumber: safe_trim(Helpers.get_element(isa, 13)),
+      versionNumber: safe_trim(Helpers.get_element(isa, 12)),
+      testIndicator: safe_trim(Helpers.get_element(isa, 15))
     }
   end
+
+  # Helper to safely trim strings, handling nil values
+  defp safe_trim(nil), do: nil
+  defp safe_trim(value) when is_binary(value), do: String.trim(value)
+  defp safe_trim(value), do: value
 
   # GS - Functional Group Header
   defp parse_gs(parser) do

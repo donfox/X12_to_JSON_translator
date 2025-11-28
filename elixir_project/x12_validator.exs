@@ -16,6 +16,12 @@ defmodule X12.Validator do
   Date: 2025-11-27
   """
 
+  # Validation constants
+  @min_valid_year 1900
+  @max_valid_year 2100
+  @min_isa_length 106
+  @rounding_tolerance 0.01
+
   defmodule ValidationIssue do
     @moduledoc "Represents a single validation issue"
     defstruct [:level, :segment_id, :segment_number, :element_position, :message, :context]
@@ -117,7 +123,7 @@ defmodule X12.Validator do
   end
 
   # Parse delimiters from ISA segment
-  defp parse_delimiters(content) when byte_size(content) < 106 do
+  defp parse_delimiters(content) when byte_size(content) < @min_isa_length do
     {:error, "File too short to contain valid ISA segment"}
   end
 
@@ -498,7 +504,7 @@ defmodule X12.Validator do
 
   defp check_date_value(result, _date_value, _format, _idx), do: result
 
-  defp check_year(result, year, idx) when year < 1900 or year > 2100 do
+  defp check_year(result, year, idx) when year < @min_valid_year or year > @max_valid_year do
     ValidationResult.add_issue(result, :warning, "DTP", idx, 3, "Date year #{year} seems unusual")
   end
 
@@ -714,19 +720,19 @@ defmodule X12.Validator do
 
   defp check_required_entity(result, true, _entity_name, _segment_id), do: result
 
-  defp check_claim_total(result, claim_amount, service_line_total) 
+  defp check_claim_total(result, claim_amount, service_line_total)
       when claim_amount > 0 and service_line_total > 0 do
     difference = abs(claim_amount - service_line_total)
 
-    if difference > 0.01 do
+    if difference > @rounding_tolerance do
       ValidationResult.add_issue(
         result,
         :warning,
         "CLM",
         0,
         2,
-        "Claim amount ($#{:erlang.float_to_binary(claim_amount, decimals: 2)}) " <>
-        "does not match service line total ($#{:erlang.float_to_binary(service_line_total, decimals: 2)})"
+        "Claim amount ($#{format_currency(claim_amount)}) " <>
+        "does not match service line total ($#{format_currency(service_line_total)})"
       )
     else
       result
@@ -734,6 +740,13 @@ defmodule X12.Validator do
   end
 
   defp check_claim_total(result, _claim_amount, _service_line_total), do: result
+
+  # Helper function to format currency
+  defp format_currency(amount) when is_float(amount) do
+    :erlang.float_to_binary(amount, decimals: 2)
+  end
+
+  defp format_currency(amount), do: to_string(amount)
 end
 
 defmodule X12.Validator.CLI do

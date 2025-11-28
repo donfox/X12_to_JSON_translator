@@ -25,6 +25,13 @@ defmodule X12ToJson.Converter do
     json = Jason.encode!(result, pretty: true)
     {:ok, json}
   rescue
-    e -> {:error, "Conversion failed: #{Exception.message(e)}"}
+    e in Jason.EncodeError ->
+      {:error, "JSON encoding failed: #{Exception.message(e)}"}
+
+    e ->
+      # Log the full error for debugging
+      require Logger
+      Logger.error("Conversion failed: #{Exception.format(:error, e, __STACKTRACE__)}")
+      {:error, "Conversion failed: #{Exception.message(e)}"}
   end
 end
