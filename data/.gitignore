@@ -1,0 +1,4 @@
+# Generated output files
+output/*
+!output/.gitkeep
+*.json

@@ -1,0 +1,18 @@
+Validating X12 file: ../data/sample_837p_claim.x12
+
+================================================================================
+X12 837P VALIDATION REPORT
+================================================================================
+
+Total Segments Processed: 37
+Overall Status: ✓ VALID
+
+Issue Summary:
+  Errors:   0
+  Warnings: 0
+  Info:     0
+
+✓ No validation issues found!
+
+================================================================================
+

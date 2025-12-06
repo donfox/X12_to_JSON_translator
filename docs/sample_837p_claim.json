@@ -1,0 +1,189 @@
+{
+  "metadata": {
+    "transactionSet": "837",
+    "transactionType": "Professional Claim",
+    "version": "005010X222A1",
+    "conversionTimestamp": "2025-01-15T14:30:00Z",
+    "sourceFile": "sample_837p_claim.x12"
+  },
+  "interchange": {
+    "senderId": "SUBMITTER123",
+    "senderQualifier": "ZZ",
+    "receiverId": "RECEIVER456",
+    "receiverQualifier": "ZZ",
+    "date": "2025-01-15",
+    "time": "14:30",
+    "controlNumber": "000000001",
+    "versionNumber": "00501",
+    "testIndicator": "P"
+  },
+  "functionalGroup": {
+    "functionalCode": "HC",
+    "applicationSender": "SUBMITTER123",
+    "applicationReceiver": "RECEIVER456",
+    "date": "2025-01-15",
+    "time": "14:30",
+    "controlNumber": "1",
+    "responsibleAgency": "X",
+    "version": "005010X222A1"
+  },
+  "transactionSet": {
+    "controlNumber": "0001",
+    "implementationGuide": "005010X222A1"
+  },
+  "beginningOfHierarchicalTransaction": {
+    "structureCode": "0019",
+    "purposeCode": "00",
+    "referenceId": "123456",
+    "date": "2025-01-15",
+    "time": "14:30",
+    "transactionTypeCode": "CH"
+  },
+  "submitter": {
+    "organizationName": "PREMIER BILLING SERVICE",
+    "identifierCode": "SUBMITTER123",
+    "identifierQualifier": "46",
+    "contact": {
+      "name": "JOHN DOE",
+      "phone": "5551234567",
+      "extension": "123"
+    }
+  },
+  "receiver": {
+    "organizationName": "BLUE CROSS BLUE SHIELD",
+    "identifierCode": "RECEIVER456",
+    "identifierQualifier": "46"
+  },
+  "providers": [
+    {
+      "hierarchicalLevel": "1",
+      "levelCode": "20",
+      "hasChildren": true,
+      "providerType": "billing",
+      "organization": {
+        "name": "CITY MEDICAL CENTER",
+        "npi": "1234567890",
+        "taxId": "987654321"
+      },
+      "address": {
+        "street": "123 HEALTHCARE DRIVE",
+        "city": "ANYTOWN",
+        "state": "CA",
+        "zip": "12345"
+      }
+    }
+  ],
+  "subscribers": [
+    {
+      "hierarchicalLevel": "2",
+      "parentLevel": "1",
+      "levelCode": "22",
+      "hasChildren": false,
+      "payerResponsibility": "Primary",
+      "relationshipCode": "18",
+      "claimFilingIndicator": "CI",
+      "patient": {
+        "lastName": "SMITH",
+        "firstName": "JOHN",
+        "middleName": "A",
+        "memberId": "123456789",
+        "address": {
+          "street": "456 PATIENT STREET",
+          "city": "ANYTOWN",
+          "state": "CA",
+          "zip": "12345"
+        },
+        "demographics": {
+          "dateOfBirth": "1980-05-15",
+          "gender": "M"
+        }
+      },
+      "payer": {
+        "name": "BLUE CROSS BLUE SHIELD",
+        "payerId": "12345",
+        "identifierQualifier": "PI"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "PATIENT001",
+      "totalChargeAmount": 250.00,
+      "placeOfService": "11",
+      "claimFrequency": "1",
+      "providerSignature": "Y",
+      "assignmentOfBenefits": "A",
+      "releaseOfInformation": "Y",
+      "patientSignature": "Y",
+      "dates": {
+        "admissionDate": "2025-01-10",
+        "dischargeDate": "2025-01-10"
+      },
+      "admissionType": "1",
+      "admissionSource": "9",
+      "patientStatus": "01",
+      "diagnoses": {
+        "principal": {
+          "code": "Z1234",
+          "codeType": "ABK"
+        },
+        "additional": [
+          {
+            "code": "25000",
+            "codeType": "BK"
+          },
+          {
+            "code": "78905",
+            "codeType": "BK"
+          }
+        ]
+      },
+      "serviceLines": [
+        {
+          "lineNumber": 1,
+          "procedure": {
+            "code": "99213",
+            "codeType": "HC",
+            "description": "Office/outpatient visit, established patient"
+          },
+          "chargeAmount": 125.00,
+          "unit": "UN",
+          "quantity": 1,
+          "placeOfService": "1",
+          "serviceDate": "2025-01-10"
+        },
+        {
+          "lineNumber": 2,
+          "procedure": {
+            "code": "80053",
+            "codeType": "HC",
+            "description": "Comprehensive metabolic panel"
+          },
+          "chargeAmount": 75.00,
+          "unit": "UN",
+          "quantity": 1,
+          "placeOfService": "1",
+          "serviceDate": "2025-01-10"
+        },
+        {
+          "lineNumber": 3,
+          "procedure": {
+            "code": "85025",
+            "codeType": "HC",
+            "description": "Complete blood count"
+          },
+          "chargeAmount": 50.00,
+          "unit": "UN",
+          "quantity": 1,
+          "placeOfService": "1",
+          "serviceDate": "2025-01-10"
+        }
+      ]
+    }
+  ],
+  "controlTotals": {
+    "transactionSegmentCount": 35,
+    "functionalGroupCount": 1,
+    "interchangeControlNumber": "000000001"
+  }
+}

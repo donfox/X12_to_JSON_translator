@@ -1,0 +1,164 @@
+{
+  "metadata": {
+    "transactionSet": "837",
+    "transactionType": "Professional Claim",
+    "version": "005010X222A1",
+    "conversionTimestamp": "2025-12-05T18:28:02.447824",
+    "sourceFile": "X12 EDI Stream"
+  },
+  "interchange": {
+    "senderId": "SUBMITTER",
+    "senderQualifier": "ZZ",
+    "receiverId": "RECEIVER",
+    "receiverQualifier": "ZZ",
+    "date": null,
+    "time": "12:00",
+    "controlNumber": "000000001",
+    "versionNumber": "00501",
+    "testIndicator": "P"
+  },
+  "functionalGroup": {
+    "functionalCode": "HC",
+    "applicationSender": "SENDER",
+    "applicationReceiver": "RECEIVER",
+    "date": "2024-11-27",
+    "time": "12:00",
+    "controlNumber": "1",
+    "responsibleAgency": "X",
+    "version": "005010X222A1"
+  },
+  "transactionSet": {
+    "controlNumber": "0001",
+    "implementationGuide": "005010X222A1"
+  },
+  "beginningOfHierarchicalTransaction": {
+    "structureCode": "0019",
+    "purposeCode": "00",
+    "referenceId": "123456",
+    "date": "2024-11-27",
+    "time": "12:00",
+    "transactionTypeCode": "CH"
+  },
+  "submitter": {
+    "organizationName": "SUBMITTER NAME",
+    "identifierCode": "12345",
+    "identifierQualifier": "46",
+    "contact": {
+      "name": "CONTACT NAME",
+      "phone": "5555551234",
+      "extension": null
+    }
+  },
+  "receiver": {
+    "organizationName": "RECEIVER NAME",
+    "identifierCode": "67890",
+    "identifierQualifier": "46"
+  },
+  "providers": [
+    {
+      "hierarchicalLevel": "1",
+      "levelCode": "20",
+      "hasChildren": true,
+      "providerType": "billing",
+      "organization": {
+        "name": "BILLING PROVIDER",
+        "npi": "1234567890",
+        "taxId": "123456789"
+      },
+      "address": {
+        "street": "123 MAIN STREET",
+        "city": "AKRON",
+        "state": "OH",
+        "zip": "44301"
+      }
+    }
+  ],
+  "subscribers": [
+    {
+      "hierarchicalLevel": "2",
+      "parentLevel": "1",
+      "levelCode": "22",
+      "hasChildren": false,
+      "payerResponsibility": "Primary",
+      "relationshipCode": "18",
+      "claimFilingIndicator": "MB",
+      "patient": {
+        "lastName": "DOE",
+        "firstName": "JOHN",
+        "middleName": "",
+        "memberId": "987654321",
+        "address": {
+          "street": "456 OAK AVENUE",
+          "city": "AKRON",
+          "state": "OH",
+          "zip": "44301"
+        },
+        "demographics": {
+          "dateOfBirth": "1980-01-15",
+          "gender": "M"
+        }
+      },
+      "payer": {
+        "name": "INSURANCE COMPANY",
+        "payerId": "INSURANCECO",
+        "identifierQualifier": "PI"
+      }
+    }
+  ],
+  "claims": [
+    {
+      "claimId": "CLAIM123",
+      "totalChargeAmount": 500.0,
+      "placeOfService": "11",
+      "claimFrequency": "1",
+      "providerSignature": "Y",
+      "assignmentOfBenefits": "A",
+      "releaseOfInformation": "Y",
+      "patientSignature": "Y",
+      "dates": {
+        "admissionDate": "2024-11-20",
+        "dischargeDate": "2024-11-20"
+      },
+      "diagnoses": {
+        "additional": [],
+        "principal": {
+          "code": "Z1234",
+          "codeType": "ABK"
+        }
+      },
+      "serviceLines": [
+        {
+          "lineNumber": 1,
+          "procedure": {
+            "code": "99213",
+            "codeType": "HC",
+            "description": "Office/outpatient visit, established patient"
+          },
+          "chargeAmount": 200.0,
+          "unit": "UN",
+          "quantity": 1.0,
+          "placeOfService": "",
+          "serviceDate": "2024-11-20"
+        },
+        {
+          "lineNumber": 2,
+          "procedure": {
+            "code": "99214",
+            "codeType": "HC",
+            "description": ""
+          },
+          "chargeAmount": 300.0,
+          "unit": "UN",
+          "quantity": 1.0,
+          "placeOfService": "",
+          "serviceDate": "2024-11-20"
+        }
+      ]
+    }
+  ],
+  "controlTotals": {
+    "transactionSegmentCount": 31,
+    "functionalGroupCount": 1,
+    "interchangeControlNumber": "000000001"
+  }
+}

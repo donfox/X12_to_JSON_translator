@@ -1,0 +1,59 @@
+Validating X12 file: ../data/malformed_837p.x12
+
+================================================================================
+X12 837P VALIDATION REPORT
+================================================================================
+
+Total Segments Processed: 21
+Overall Status: ✗ INVALID
+
+Issue Summary:
+  Errors:   9
+  Warnings: 2
+  Info:     0
+
+--------------------------------------------------------------------------------
+VALIDATION ISSUES
+--------------------------------------------------------------------------------
+
+ERRORS (9):
+--------------------------------------------------------------------------------
+  [SE] Segment 19, Element 2
+    SE control number '9999' does not match ST '0001'
+
+  [GE] Segment 20, Element 2
+    GE control number '7777' does not match GS '1'
+
+  [IEA] Segment 21, Element 2
+    IEA control number '000000002' does not match ISA '000000001'
+
+  [NM1] Segment 6, Element 2
+    Invalid entity type qualifier '9' (must be 1 or 2)
+
+  [CLM] Segment 12, Element 2
+    Claim amount 'INVALID' is not a valid number
+
+  [DTP] Segment 13, Element 3
+    Date month 13 is invalid
+
+  [DTP] Segment 13, Element 3
+    Date day 32 is invalid
+
+  [HI] Segment 15, Element 1
+    Diagnosis code is empty
+
+  [NM1] Segment 0
+    Missing required Subscriber/Insured (NM1*IL)
+
+
+WARNINGS (2):
+--------------------------------------------------------------------------------
+  [SV1] Segment 17, Element 2
+    Line item charge is negative: -50.0
+
+  [SV1] Segment 17, Element 4
+    Service units should be positive (found 0.0)
+
+
+================================================================================
+
